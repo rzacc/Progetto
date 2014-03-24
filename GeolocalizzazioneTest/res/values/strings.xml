@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">GeolocalizzazioneTest</string>
+    <string name="avvia">Avvia localizzazione</string>
+    <string name="termina">Termina localizzazione</string>
+    <string name="network">Network</string>
+    <string name="GPS">GPS</string>
+</resources>
