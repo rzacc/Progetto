@@ -21,6 +21,8 @@ public class MainActivity extends Activity {
     ArrayAdapter<PosizioneCorrente> adapter;
     //Il provider dei servizi di localizzazione
     String provider;
+    //Il secondo provider (utilizzato quando si localizza sia tramite GPS che tramite network)
+    String provider2;
 
     /**
      * Called when the activity is first created.
@@ -59,16 +61,13 @@ public class MainActivity extends Activity {
         avviaButton.setOnClickListener(
                 new Button.OnClickListener() {
                     @Override
-                    public void onClick(View v) {
-                            //Connessione al Network location service
-                            Location loc = lm.getLastKnownLocation(provider);
-                            //Inserisci voce nella lista
-                            PosizioneCorrente pos = new PosizioneCorrente(Double.toString(loc.getLatitude()), Double.toString(loc.getLongitude()));
-                            posizione.add(pos);
-                            adapter.notifyDataSetChanged();
+                    public void onClick(View v) throws IllegalArgumentException{
+                        try {
                             //chiedi al LocationManager di inviare aggiornamenti sulla posizione
                             lm.requestLocationUpdates(provider, 30000L, 2.0f, locListen);
+                            lm.requestLocationUpdates(provider2, 30000L, 2.0f, locListen);
 
+                        }catch(IllegalArgumentException e){/* mostrare un messaggio di errore */ }
                         }
 
                         }
@@ -80,28 +79,68 @@ public class MainActivity extends Activity {
                 new Button.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-
+                        lm.removeUpdates(locListen);
                     }
                 }
         );
 
     }
 
-    public void onGPSCheckboxClicked(View view){
+    public void onGPSCheckboxClicked(View view) throws IllegalArgumentException{
+        try {
       /*  //Chiedi attivazione GPS se non attivo
         boolean gpsEnabled = lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
         //Creare una finestra che chiede all'utente di attivare il GPS */
 
-        //La checkbox è spuntata?
-        boolean checked = ((CheckBox)view).isChecked();
-        if(checked){provider = "gps";}
+            //La checkbox è spuntata?
+            boolean gpsChecked = ((CheckBox) view).isChecked();
+            //E' spuntata anche la checkbox "Network"?
+            final CheckBox networkCB = (CheckBox) findViewById(R.id.networkCheckBox);
+            boolean networkChecked = networkCB.isChecked();
+            if (gpsChecked && networkChecked) {
+                provider = "gps";
+                provider2 = "network";
+            } else if (gpsChecked) {
+                provider = "gps";
+                provider2 = "gps";
+            } else if (networkChecked) {
+                provider = "network";
+                provider2 = "network";
+            } else {
+                provider = null;
+                provider2 = null;
+            }
+        }catch(IllegalArgumentException e){/* mostra un messaggio di errore */ }
     }
 
-    public void onNetworkCheckboxClicked(View view){
+    public void onNetworkCheckboxClicked(View view)throws IllegalArgumentException{
+        try{
         //La checkbox è spuntata?
-        boolean checked = ((CheckBox)view).isChecked();
-        if(checked){provider = "network";}
+        boolean networkChecked = ((CheckBox)view).isChecked();
+        //E' spuntata anche la checkbox "GPS"?
+        final CheckBox gpsCB = (CheckBox) findViewById(R.id.gpsCheckBox);
+        boolean gpsChecked = gpsCB.isChecked();
+        if(networkChecked && gpsChecked){
+            provider = "network";
+            provider2 = "gps";}
+        else if(networkChecked){
+            provider = "network";
+            provider2 = "network";
+        }
+        else if(gpsChecked){
+            provider = "gps";
+            provider2 = "gps";
+        }
+        else{
+            provider = null;
+            provider2 = null;
+        }
+        }catch(IllegalArgumentException e){}
     }
+
+
+
+
 
     private class LocListener implements LocationListener {
         @Override
