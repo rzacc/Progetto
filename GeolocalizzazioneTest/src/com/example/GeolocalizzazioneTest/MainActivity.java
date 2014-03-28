@@ -19,10 +19,15 @@ public class MainActivity extends Activity {
     ArrayList<PosizioneCorrente> posizione = new ArrayList<PosizioneCorrente>();
     //L'ArrayAdapter
     ArrayAdapter<PosizioneCorrente> adapter;
+    //Il LocationManager
+    LocationManager lm;
     //Il provider dei servizi di localizzazione
     String provider;
     //Il secondo provider (utilizzato quando si localizza sia tramite GPS che tramite network)
     String provider2;
+    //Il LocationListener
+    LocationListener locListen;
+    boolean localizzazioneOn = false;
 
     /**
      * Called when the activity is first created.
@@ -49,9 +54,9 @@ public class MainActivity extends Activity {
         //final TextView tvLongitude = (TextView)findViewById(R.id.tvLongitude);
 
         //Ottengo l'handle per il LocationManager
-        final LocationManager lm = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
+        lm = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
         //Oggetto per ricevere aggiornamenti sulla posizione dal LocationManager
-        final LocationListener locListen = new LocListener();
+        locListen = new LocListener();
 
         /*Location loc = lm.getLastKnownLocation("network");
         tvLatitude.setText(Double.toString(loc.getLatitude()));
@@ -66,8 +71,9 @@ public class MainActivity extends Activity {
                             //chiedi al LocationManager di inviare aggiornamenti sulla posizione
                             lm.requestLocationUpdates(provider, 30000L, 2.0f, locListen);
                             lm.requestLocationUpdates(provider2, 30000L, 2.0f, locListen);
+                            localizzazioneOn = true;
 
-                        }catch(IllegalArgumentException e){/* mostrare un messaggio di errore */ }
+                        }catch(IllegalArgumentException e){localizzazioneOn = false; /* mostrare un messaggio di errore */ }
                         }
 
                         }
@@ -80,6 +86,7 @@ public class MainActivity extends Activity {
                     @Override
                     public void onClick(View v) {
                         lm.removeUpdates(locListen);
+                        localizzazioneOn = false;
                     }
                 }
         );
@@ -91,56 +98,134 @@ public class MainActivity extends Activity {
       /*  //Chiedi attivazione GPS se non attivo
         boolean gpsEnabled = lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
         //Creare una finestra che chiede all'utente di attivare il GPS */
-
-            //La checkbox è spuntata?
-            boolean gpsChecked = ((CheckBox) view).isChecked();
-            //E' spuntata anche la checkbox "Network"?
-            final CheckBox networkCB = (CheckBox) findViewById(R.id.networkCheckBox);
-            boolean networkChecked = networkCB.isChecked();
-            if (gpsChecked && networkChecked) {
-                provider = "gps";
-                provider2 = "network";
-            } else if (gpsChecked) {
-                provider = "gps";
-                provider2 = "gps";
-            } else if (networkChecked) {
-                provider = "network";
-                provider2 = "network";
-            } else {
-                provider = null;
-                provider2 = null;
+            if(localizzazioneOn==false) {
+                //La checkbox è spuntata?
+                boolean gpsChecked = ((CheckBox) view).isChecked();
+                //E' spuntata anche la checkbox "Network"?
+                final CheckBox networkCB = (CheckBox) findViewById(R.id.networkCheckBox);
+                boolean networkChecked = networkCB.isChecked();
+                if (gpsChecked && networkChecked) {
+                    provider = "gps";
+                    provider2 = "network";
+                } else if (gpsChecked) {
+                    provider = "gps";
+                    provider2 = "gps";
+                } else if (networkChecked) {
+                    provider = "network";
+                    provider2 = "network";
+                } else {
+                    provider = null;
+                    provider2 = null;
+                }
             }
-        }catch(IllegalArgumentException e){/* mostra un messaggio di errore */ }
+            else {
+                //modifica a runtime la modalità di localizzazione
+
+                //La checkbox è spuntata?
+                boolean gpsChecked = ((CheckBox) view).isChecked();
+                //E' spuntata anche la checkbox "Network"?
+                final CheckBox networkCB = (CheckBox) findViewById(R.id.networkCheckBox);
+                boolean networkChecked = networkCB.isChecked();
+                if (gpsChecked && networkChecked) {
+                    lm.removeUpdates(locListen); //ferma gli aggiornamenti della posizione
+                    //aggiorna i provider
+                    provider = "gps";
+                    provider2 = "network";
+                    //richiedi aggiornamenti della posizione
+                    lm.requestLocationUpdates(provider, 30000L, 2.0f, locListen);
+                    lm.requestLocationUpdates(provider2, 30000L, 2.0f, locListen);
+                    localizzazioneOn = true;
+                } else if (gpsChecked) {
+                    lm.removeUpdates(locListen); //ferma gli aggiornamenti della posizione
+                    //aggiorna i provider
+                    provider = "gps";
+                    provider2 = "gps";
+                    //richiedi aggiornamenti della posizione
+                    lm.requestLocationUpdates(provider, 30000L, 2.0f, locListen);
+                    lm.requestLocationUpdates(provider2, 30000L, 2.0f, locListen);
+                    localizzazioneOn = true;
+                } else if (networkChecked) {
+                    lm.removeUpdates(locListen); //ferma gli aggiornamenti della posizione
+                    //aggiorna i provider
+                    provider = "network";
+                    provider2 = "network";
+                    //richiedi aggiornamenti della posizione
+                    lm.requestLocationUpdates(provider, 30000L, 2.0f, locListen);
+                    lm.requestLocationUpdates(provider2, 30000L, 2.0f, locListen);
+                    localizzazioneOn = true;
+                } else {
+                    provider = null;
+                    provider2 = null;
+                }
+            }
+        }catch(IllegalArgumentException e){localizzazioneOn = false; /* mostra un messaggio di errore */ }
     }
 
     public void onNetworkCheckboxClicked(View view)throws IllegalArgumentException{
         try{
-        //La checkbox è spuntata?
-        boolean networkChecked = ((CheckBox)view).isChecked();
-        //E' spuntata anche la checkbox "GPS"?
-        final CheckBox gpsCB = (CheckBox) findViewById(R.id.gpsCheckBox);
-        boolean gpsChecked = gpsCB.isChecked();
-        if(networkChecked && gpsChecked){
-            provider = "network";
-            provider2 = "gps";}
-        else if(networkChecked){
-            provider = "network";
-            provider2 = "network";
+        if(localizzazioneOn == false) {
+            //La checkbox è spuntata?
+            boolean networkChecked = ((CheckBox) view).isChecked();
+            //E' spuntata anche la checkbox "GPS"?
+            final CheckBox gpsCB = (CheckBox) findViewById(R.id.gpsCheckBox);
+            boolean gpsChecked = gpsCB.isChecked();
+            if (networkChecked && gpsChecked) {
+                provider = "network";
+                provider2 = "gps";
+            } else if (networkChecked) {
+                provider = "network";
+                provider2 = "network";
+            } else if (gpsChecked) {
+                provider = "gps";
+                provider2 = "gps";
+            } else {
+                provider = null;
+                provider2 = null;
+            }
         }
-        else if(gpsChecked){
-            provider = "gps";
-            provider2 = "gps";
+            else{
+            //modifica a runtime la modalità di localizzazione
+
+            //La checkbox è spuntata?
+            boolean networkChecked = ((CheckBox) view).isChecked();
+            //E' spuntata anche la checkbox "GPS"?
+            final CheckBox gpsCB = (CheckBox) findViewById(R.id.gpsCheckBox);
+            boolean gpsChecked = gpsCB.isChecked();
+
+            if (networkChecked && gpsChecked) {
+                lm.removeUpdates(locListen); //ferma gli aggiornamenti della posizione
+                //aggiorna i provider
+                provider = "network";
+                provider2 = "gps";
+                //richiedi aggiornamenti della posizione
+                lm.requestLocationUpdates(provider, 30000L, 2.0f, locListen);
+                lm.requestLocationUpdates(provider2, 30000L, 2.0f, locListen);
+                localizzazioneOn = true;
+            } else if (networkChecked) {
+                lm.removeUpdates(locListen); //ferma gli aggiornamenti della posizione
+                //aggiorna i provider
+                provider = "network";
+                provider2 = "network";
+                //richiedi aggiornamenti della posizione
+                lm.requestLocationUpdates(provider, 30000L, 2.0f, locListen);
+                lm.requestLocationUpdates(provider2, 30000L, 2.0f, locListen);
+                localizzazioneOn = true;
+            } else if (gpsChecked) {
+                lm.removeUpdates(locListen); //ferma gli aggiornamenti della posizione
+                //aggiorna i provider
+                provider = "gps";
+                provider2 = "gps";
+                //richiedi aggiornamenti della posizione
+                lm.requestLocationUpdates(provider, 30000L, 2.0f, locListen);
+                lm.requestLocationUpdates(provider2, 30000L, 2.0f, locListen);
+                localizzazioneOn = true;
+            } else {
+                provider = null;
+                provider2 = null;
+            }
         }
-        else{
-            provider = null;
-            provider2 = null;
-        }
-        }catch(IllegalArgumentException e){}
+        }catch(IllegalArgumentException e){localizzazioneOn = false; /*mostra messaggio di errore */}
     }
-
-
-
-
 
     private class LocListener implements LocationListener {
         @Override
