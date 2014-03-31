@@ -11,6 +11,6 @@ public class PosizioneCorrente{
 
     @Override
     public String toString(){
-        return "Latitude: " + latitude + "  Longitude: " + longitude;
+        return "Latitudine: " + latitude + "  Longitudine: " + longitude;
     }
 }

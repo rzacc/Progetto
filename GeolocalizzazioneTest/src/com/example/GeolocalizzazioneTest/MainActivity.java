@@ -47,37 +47,35 @@ public class MainActivity extends Activity {
         //Ottengo i riferimenti alle altre componenti della UI
         final Button avviaButton = (Button) findViewById(R.id.avvia);
         final Button terminaButton = (Button) findViewById(R.id.termina);
-        final CheckBox networkCB = (CheckBox) findViewById(R.id.networkCheckBox);
-        final CheckBox gpsCB = (CheckBox) findViewById(R.id.gpsCheckBox);
-
-        //final TextView tvLatitude = (TextView)findViewById(R.id.tvLatitude);
-        //final TextView tvLongitude = (TextView)findViewById(R.id.tvLongitude);
 
         //Ottengo l'handle per il LocationManager
-        lm = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
+        lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         //Oggetto per ricevere aggiornamenti sulla posizione dal LocationManager
         locListen = new LocListener();
-
-        /*Location loc = lm.getLastKnownLocation("network");
-        tvLatitude.setText(Double.toString(loc.getLatitude()));
-        tvLongitude.setText(Double.toString(loc.getLongitude())); */
 
         //Definizione listener per il Button "Avvia localizzazione"
         avviaButton.setOnClickListener(
                 new Button.OnClickListener() {
                     @Override
-                    public void onClick(View v) throws IllegalArgumentException{
+                    public void onClick(View v) throws IllegalArgumentException {
+                        if(!localizzazioneOn){
                         try {
                             //chiedi al LocationManager di inviare aggiornamenti sulla posizione
                             lm.requestLocationUpdates(provider, 30000L, 2.0f, locListen);
                             lm.requestLocationUpdates(provider2, 30000L, 2.0f, locListen);
                             localizzazioneOn = true;
 
-                        }catch(IllegalArgumentException e){localizzazioneOn = false; /* mostrare un messaggio di errore */ }
+                        } catch (IllegalArgumentException e) {
+                            localizzazioneOn = false;
+                            Toast.makeText(getApplicationContext(), R.string.nessuna_checkbox_selezionata, Toast.LENGTH_SHORT).show();
                         }
 
+                    }else{
+                            Toast.makeText(getApplicationContext(), R.string.localizzazione_in_corso, Toast.LENGTH_SHORT).show();
                         }
 
+                }
+                }
         );
 
         //Definizione listener per il Button "Termina localizzazione"
@@ -93,14 +91,17 @@ public class MainActivity extends Activity {
 
     }
 
+
     public void onGPSCheckboxClicked(View view) throws IllegalArgumentException{
         try {
-      /*  //Chiedi attivazione GPS se non attivo
+        //La checkbox è spuntata?
+        boolean gpsChecked = ((CheckBox) view).isChecked();
+        //Se il GPS non è acceso, notificalo
         boolean gpsEnabled = lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
-        //Creare una finestra che chiede all'utente di attivare il GPS */
-            if(localizzazioneOn==false) {
-                //La checkbox è spuntata?
-                boolean gpsChecked = ((CheckBox) view).isChecked();
+        if(!gpsEnabled && gpsChecked){Toast.makeText(getApplicationContext(),R.string.gps_spento, Toast.LENGTH_SHORT).show();}
+
+            if(!localizzazioneOn) {
+
                 //E' spuntata anche la checkbox "Network"?
                 final CheckBox networkCB = (CheckBox) findViewById(R.id.networkCheckBox);
                 boolean networkChecked = networkCB.isChecked();
@@ -122,7 +123,7 @@ public class MainActivity extends Activity {
                 //modifica a runtime la modalità di localizzazione
 
                 //La checkbox è spuntata?
-                boolean gpsChecked = ((CheckBox) view).isChecked();
+                //gpsChecked = ((CheckBox) view).isChecked();
                 //E' spuntata anche la checkbox "Network"?
                 final CheckBox networkCB = (CheckBox) findViewById(R.id.networkCheckBox);
                 boolean networkChecked = networkCB.isChecked();
@@ -154,18 +155,27 @@ public class MainActivity extends Activity {
                     lm.requestLocationUpdates(provider2, 30000L, 2.0f, locListen);
                     localizzazioneOn = true;
                 } else {
+                    lm.removeUpdates(locListen); //ferma gli aggiornamenti della posizione
+                    Toast.makeText(getApplicationContext(),R.string.nessuna_checkbox_selezionata, Toast.LENGTH_SHORT).show();
                     provider = null;
                     provider2 = null;
+                    localizzazioneOn = true;
                 }
             }
-        }catch(IllegalArgumentException e){localizzazioneOn = false; /* mostra un messaggio di errore */ }
+        }catch(IllegalArgumentException e){
+            Toast.makeText(getApplicationContext(),"Eccezione sollevata", Toast.LENGTH_SHORT).show();
+        }
     }
 
     public void onNetworkCheckboxClicked(View view)throws IllegalArgumentException{
         try{
-        if(localizzazioneOn == false) {
-            //La checkbox è spuntata?
-            boolean networkChecked = ((CheckBox) view).isChecked();
+        //La checkbox è spuntata?
+        boolean networkChecked = ((CheckBox) view).isChecked();
+        //Se nessuna connessione a Internet è attiva, notificalo
+        boolean networkEnabled = lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+        if(!networkEnabled && networkChecked){Toast.makeText(getApplicationContext(),R.string.rete_e_internet_assenti, Toast.LENGTH_SHORT).show();}
+
+        if(!localizzazioneOn) {
             //E' spuntata anche la checkbox "GPS"?
             final CheckBox gpsCB = (CheckBox) findViewById(R.id.gpsCheckBox);
             boolean gpsChecked = gpsCB.isChecked();
@@ -187,7 +197,7 @@ public class MainActivity extends Activity {
             //modifica a runtime la modalità di localizzazione
 
             //La checkbox è spuntata?
-            boolean networkChecked = ((CheckBox) view).isChecked();
+            //networkChecked = ((CheckBox) view).isChecked();
             //E' spuntata anche la checkbox "GPS"?
             final CheckBox gpsCB = (CheckBox) findViewById(R.id.gpsCheckBox);
             boolean gpsChecked = gpsCB.isChecked();
@@ -220,11 +230,16 @@ public class MainActivity extends Activity {
                 lm.requestLocationUpdates(provider2, 30000L, 2.0f, locListen);
                 localizzazioneOn = true;
             } else {
+                lm.removeUpdates(locListen); //ferma gli aggiornamenti della posizione
+                Toast.makeText(getApplicationContext(),R.string.nessuna_checkbox_selezionata, Toast.LENGTH_SHORT).show();
                 provider = null;
                 provider2 = null;
+                localizzazioneOn = true;
             }
         }
-        }catch(IllegalArgumentException e){localizzazioneOn = false; /*mostra messaggio di errore */}
+        }catch(IllegalArgumentException e){
+            Toast.makeText(getApplicationContext(),"Eccezione sollevata", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private class LocListener implements LocationListener {
@@ -250,4 +265,5 @@ public class MainActivity extends Activity {
     }
 
 }
+
 

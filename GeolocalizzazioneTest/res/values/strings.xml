@@ -2,7 +2,11 @@
 <resources>
     <string name="app_name">GeolocalizzazioneTest</string>
     <string name="avvia">Avvia localizzazione</string>
+    <string name="localizzazione_in_corso">Localizzazione già in corso</string>
     <string name="termina">Termina localizzazione</string>
     <string name="network">Network</string>
     <string name="GPS">GPS</string>
+    <string name="nessuna_checkbox_selezionata">Nessuna checkbox selezionata</string>
+    <string name="gps_spento">Attenzione: GPS spento</string>
+    <string name="rete_e_internet_assenti">Attenzione: rete assente</string>
 </resources>
